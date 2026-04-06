@@ -1,0 +1,697 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Ledger Legends: Statement Impact Edition</title>
+  <style>
+    :root {
+      --bg: #07111f;
+      --panel: #0f172a;
+      --panel2: #111827;
+      --line: rgba(148,163,184,.16);
+      --text: #e5e7eb;
+      --muted: #94a3b8;
+      --green: #22c55e;
+      --green2: #16a34a;
+      --blue: #38bdf8;
+      --red: #ef4444;
+      --amber: #f59e0b;
+      --radius: 22px;
+      --shadow: 0 18px 50px rgba(0,0,0,.30);
+    }
+    * { box-sizing: border-box; }
+    body {
+      margin: 0;
+      font-family: Inter, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+      color: var(--text);
+      background:
+        radial-gradient(circle at top left, rgba(34,197,94,.11), transparent 28%),
+        radial-gradient(circle at top right, rgba(56,189,248,.11), transparent 28%),
+        linear-gradient(180deg, #020617 0%, #0f172a 100%);
+      min-height: 100vh;
+    }
+    .app { width: min(1120px, calc(100vw - 20px)); margin: 18px auto 28px; }
+    .hidden { display: none !important; }
+    .card {
+      background: linear-gradient(180deg, rgba(15,23,42,.97), rgba(17,24,39,.97));
+      border: 1px solid var(--line);
+      border-radius: var(--radius);
+      box-shadow: var(--shadow);
+      overflow: hidden;
+    }
+    .hero { display: grid; grid-template-columns: 1.25fr .9fr; gap: 20px; padding: 26px; }
+    .title { font-size: clamp(2rem, 5vw, 3.25rem); font-weight: 900; line-height: 1.02; margin: 0 0 12px; letter-spacing: -.04em; }
+    .subtitle { color: var(--muted); margin: 0 0 20px; font-size: 1.05rem; max-width: 62ch; }
+    .pillrow { display: flex; flex-wrap: wrap; gap: 10px; margin-bottom: 18px; }
+    .pill { padding: 8px 12px; border-radius: 999px; font-size: .87rem; background: rgba(56,189,248,.10); border: 1px solid rgba(56,189,248,.24); color: #d9f5ff; }
+    .box { background: rgba(2,6,23,.32); border: 1px solid var(--line); border-radius: 18px; padding: 18px; }
+    .box h3 { margin: 0 0 10px; font-size: 1rem; }
+    .box ul { margin: 0; padding-left: 18px; color: var(--muted); }
+    .box li { margin: 7px 0; }
+    .buttons { display: flex; flex-wrap: wrap; gap: 10px; margin-top: 20px; }
+    button {
+      border: none; cursor: pointer; padding: 12px 16px; border-radius: 14px;
+      font-weight: 800; transition: transform .15s ease, opacity .2s ease, box-shadow .2s ease;
+    }
+    button:hover { transform: translateY(-1px); }
+    button:disabled { opacity: .55; cursor: not-allowed; transform: none; }
+    .primary { background: linear-gradient(135deg, var(--green), var(--green2)); color: #062b12; box-shadow: 0 12px 24px rgba(34,197,94,.18); }
+    .secondary { background: rgba(148,163,184,.12); color: var(--text); border: 1px solid var(--line); }
+    .accent { background: linear-gradient(135deg, var(--blue), #0ea5e9); color: #082f49; box-shadow: 0 12px 24px rgba(56,189,248,.16); }
+    .warn { background: linear-gradient(135deg, #fbbf24, #f59e0b); color: #451a03; }
+    .ghost { background: transparent; color: #cbd5e1; border: 1px solid var(--line); }
+
+    .study-grid { display: grid; grid-template-columns: repeat(2, minmax(0,1fr)); gap: 10px; margin-top: 14px; }
+    .study-btn { width: 100%; text-align: left; padding: 14px; border-radius: 16px; background: rgba(2,6,23,.34); color: var(--text); border: 1px solid var(--line); }
+    .study-btn.active { background: rgba(56,189,248,.12); border-color: rgba(56,189,248,.35); }
+    .study-btn strong { display: block; margin-bottom: 4px; }
+    .study-btn span { font-size: .82rem; color: var(--muted); }
+
+    .dashboard { display: grid; grid-template-columns: repeat(5, 1fr); gap: 12px; margin-top: 18px; }
+    .stat { background: linear-gradient(180deg, rgba(15,23,42,.96), rgba(17,24,39,.96)); border: 1px solid var(--line); border-radius: 18px; padding: 14px; box-shadow: var(--shadow); }
+    .stat-label { color: var(--muted); font-size: .82rem; margin-bottom: 6px; }
+    .stat-value { font-size: 1.35rem; font-weight: 900; letter-spacing: -.02em; }
+    .stat.flash { animation: pop .45s ease; }
+    @keyframes pop { 0% { transform: scale(1);} 40% { transform: scale(1.06);} 100% { transform: scale(1);} }
+
+    .layout { display: grid; grid-template-columns: 280px 1fr; gap: 18px; margin-top: 18px; }
+    .sidebar, .main { padding: 18px; border-radius: var(--radius); border: 1px solid var(--line); box-shadow: var(--shadow); background: linear-gradient(180deg, rgba(15,23,42,.97), rgba(17,24,39,.97)); }
+    .panel-title { font-size: 1rem; font-weight: 800; margin-bottom: 12px; }
+    .level-grid { display: grid; gap: 10px; }
+    .level-btn { width: 100%; text-align: left; padding: 14px; border-radius: 16px; background: rgba(2,6,23,.34); color: var(--text); border: 1px solid var(--line); }
+    .level-btn.active { background: rgba(56,189,248,.12); border-color: rgba(56,189,248,.35); }
+    .level-title { font-weight: 800; margin-bottom: 4px; }
+    .level-meta { font-size: .82rem; color: var(--muted); }
+    .progress-shell { height: 10px; border-radius: 999px; overflow: hidden; background: rgba(148,163,184,.15); margin-top: 9px; }
+    .progress-fill { height: 100%; width: 0%; background: linear-gradient(90deg, var(--blue), var(--green)); transition: width .35s ease; }
+
+    .question-head { display: flex; justify-content: space-between; gap: 16px; align-items: start; margin-bottom: 12px; }
+    .badge { display: inline-flex; align-items: center; gap: 8px; padding: 8px 12px; border-radius: 999px; background: rgba(34,197,94,.12); border: 1px solid rgba(34,197,94,.24); color: #dcfce7; font-size: .84rem; }
+    .question-title { font-size: clamp(1.4rem, 3vw, 2rem); font-weight: 900; line-height: 1.08; margin-top: 8px; letter-spacing: -.02em; }
+    .question-sub { color: var(--muted); margin-top: 8px; }
+    .scenario { margin-top: 16px; padding: 16px 18px; border-radius: 18px; border: 1px solid rgba(56,189,248,.18); background: rgba(2,132,199,.10); color: #e0f2fe; font-size: 1.05rem; line-height: 1.52; }
+    .chips { display: flex; flex-wrap: wrap; gap: 8px; margin-top: 14px; }
+    .chip { padding: 6px 10px; border-radius: 999px; border: 1px solid var(--line); background: rgba(148,163,184,.11); color: #cbd5e1; font-size: .8rem; }
+    .answers { display: grid; gap: 12px; margin-top: 18px; }
+    .answer-card { width: 100%; text-align: left; display: flex; gap: 12px; align-items: start; border-radius: 16px; padding: 14px 16px; background: rgba(2,6,23,.34); color: var(--text); border: 1px solid var(--line); }
+    .answer-card.selected { border-color: rgba(56,189,248,.40); background: rgba(56,189,248,.10); }
+    .answer-card.correct { border-color: rgba(34,197,94,.40); background: rgba(34,197,94,.10); }
+    .answer-card.wrong { border-color: rgba(239,68,68,.40); background: rgba(239,68,68,.10); }
+    .key { width: 30px; height: 30px; border-radius: 999px; display: grid; place-items: center; flex: none; font-weight: 900; background: rgba(255,255,255,.03); border: 1px solid var(--line); }
+    .answer-text strong { display: block; margin-bottom: 4px; }
+    .answer-text span { color: var(--muted); font-size: .92rem; }
+
+    .actions { margin-top: 18px; display: flex; justify-content: space-between; gap: 12px; flex-wrap: wrap; align-items: center; }
+    .feedback { margin-top: 16px; padding: 16px 18px; border-radius: 18px; border: 1px solid var(--line); background: rgba(2,6,23,.36); display: none; }
+    .feedback.show { display: block; }
+    .feedback.good { background: rgba(34,197,94,.09); border-color: rgba(34,197,94,.25); }
+    .feedback.bad { background: rgba(239,68,68,.08); border-color: rgba(239,68,68,.25); }
+    .feedback h4 { margin: 0 0 8px; }
+    .feedback p { margin: 6px 0; line-height: 1.5; }
+    .tiny { color: var(--muted); font-size: .84rem; }
+    .lives { display: flex; gap: 6px; flex-wrap: wrap; }
+    .heart { font-size: 1.08rem; }
+    .heart.empty { opacity: .25; }
+    .pulse-good { animation: pulseGood .55s ease; }
+    .pulse-bad { animation: pulseBad .55s ease; }
+    @keyframes pulseGood { 0% { box-shadow: 0 0 0 rgba(34,197,94,0);} 50% { box-shadow: 0 0 0 12px rgba(34,197,94,.08);} 100% { box-shadow: 0 0 0 rgba(34,197,94,0);} }
+    @keyframes pulseBad { 0% { box-shadow: 0 0 0 rgba(239,68,68,0);} 50% { box-shadow: 0 0 0 12px rgba(239,68,68,.08);} 100% { box-shadow: 0 0 0 rgba(239,68,68,0);} }
+    .toast {
+      position: fixed; right: 18px; bottom: 18px; z-index: 40; max-width: 320px; padding: 14px 16px;
+      background: rgba(15,23,42,.96); border: 1px solid var(--line); border-radius: 16px; box-shadow: var(--shadow);
+      transform: translateY(18px); opacity: 0; pointer-events: none; transition: all .25s ease;
+    }
+    .toast.show { transform: translateY(0); opacity: 1; }
+    .toast strong { display: block; margin-bottom: 4px; }
+    .results { display: grid; grid-template-columns: 1.2fr .8fr; gap: 18px; margin-top: 18px; }
+    .review-list { display: grid; gap: 12px; margin-top: 14px; }
+    .review-item { padding: 14px; border-radius: 16px; border: 1px solid var(--line); background: rgba(2,6,23,.34); }
+    .review-item.good { border-color: rgba(34,197,94,.24); }
+    .review-item.bad { border-color: rgba(239,68,68,.24); }
+    .review-head { display: flex; justify-content: space-between; gap: 10px; }
+    .tag { padding: 5px 9px; border-radius: 999px; font-size: .76rem; font-weight: 900; }
+    .tag.good { background: rgba(34,197,94,.11); color: #bbf7d0; }
+    .tag.bad { background: rgba(239,68,68,.11); color: #fecaca; }
+    @media (max-width: 960px) {
+      .hero, .layout, .results { grid-template-columns: 1fr; }
+      .dashboard { grid-template-columns: repeat(3, 1fr); }
+      .study-grid { grid-template-columns: 1fr; }
+    }
+    @media (max-width: 640px) {
+      .app { width: min(100vw - 12px, 1120px); }
+      .hero, .sidebar, .main { padding: 16px; }
+      .dashboard { grid-template-columns: repeat(2, 1fr); }
+      .actions { flex-direction: column; align-items: stretch; }
+      .actions > div:last-child { width: 100%; display: grid; gap: 10px; }
+      .actions button { width: 100%; }
+      .question-head { flex-direction: column; }
+    }
+  </style>
+</head>
+<body>
+  <div class="app">
+    <section id="homeScreen" class="card">
+      <div class="hero">
+        <div>
+          <div class="pillrow">
+            <span class="pill">Statement effects</span>
+            <span class="pill">Lives and streaks</span>
+            <span class="pill">Level study mode</span>
+            <span class="pill">No timer</span>
+          </div>
+          <h1 class="title">Ledger Legends<br/>Statement Impact Edition</h1>
+          <p class="subtitle">Now focused on what your class actually wants for journal and adjusting entries: how the Balance Sheet, Income Statement, and Statement of Cash Flows change.</p>
+          <div class="box">
+            <h3>What this version trains</h3>
+            <ul>
+              <li>How transactions affect the Balance Sheet</li>
+              <li>How revenue and expense recognition changes the Income Statement</li>
+              <li>How cash versus noncash items affect the Statement of Cash Flows</li>
+              <li>How adjusting entries change statements even when cash does not move</li>
+            </ul>
+          </div>
+          <div class="buttons">
+            <button class="primary" id="startQuickBtn">Start Quick Game</button>
+            <button class="accent" id="startAllBtn">Start Full Challenge</button>
+            <button class="secondary" id="howBtn">How to Play</button>
+          </div>
+        </div>
+        <div style="display:grid; gap:18px;">
+          <div class="box">
+            <h3>Study by level</h3>
+            <div class="study-grid" id="studyLevelGrid"></div>
+          </div>
+          <div class="box">
+            <h3>Learning goals</h3>
+            <ul>
+              <li>Connect transactions to statement changes, not just debits and credits</li>
+              <li>See why many adjusting entries affect BS and IS but not current cash flow</li>
+              <li>Practice journal-entry topics in a format closer to exam thinking</li>
+              <li>Keep the point system and replayability</li>
+            </ul>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <section id="gameScreen" class="hidden">
+      <div class="dashboard">
+        <div class="stat" id="scoreWrap"><div class="stat-label">Score</div><div class="stat-value" id="scoreStat">0</div></div>
+        <div class="stat" id="streakWrap"><div class="stat-label">Streak</div><div class="stat-value" id="streakStat">0</div></div>
+        <div class="stat"><div class="stat-label">Lives</div><div class="stat-value lives" id="livesStat"></div></div>
+        <div class="stat"><div class="stat-label">Multiplier</div><div class="stat-value" id="multiplierStat">1.0x</div></div>
+        <div class="stat"><div class="stat-label">Question</div><div class="stat-value" id="qStat">1 / 10</div></div>
+      </div>
+      <div class="layout">
+        <aside class="sidebar">
+          <div class="panel-title">Levels</div>
+          <div id="levelGrid" class="level-grid"></div>
+          <div class="box" style="margin-top:16px;">
+            <h3>Run summary</h3>
+            <div class="tiny" id="modeSummary">Mixed practice mode.</div>
+          </div>
+          <div class="buttons">
+            <button class="ghost" id="homeBtn">Home</button>
+            <button class="secondary" id="restartBtn">Restart</button>
+          </div>
+        </aside>
+        <main class="main" id="mainPanel">
+          <div class="question-head">
+            <div>
+              <div class="badge" id="badgeText">Level 1</div>
+              <div class="question-title" id="questionTitle">Question</div>
+              <div class="question-sub" id="questionSubtitle">Choose the best answer.</div>
+            </div>
+            <div style="min-width:220px; width:min(280px,100%);">
+              <div class="tiny">Level progress</div>
+              <div class="progress-shell"><div class="progress-fill" id="progressFill"></div></div>
+            </div>
+          </div>
+          <div class="scenario" id="scenarioBox"></div>
+          <div class="chips" id="tagChips"></div>
+          <div id="mcqArea" class="answers"></div>
+          <div class="actions">
+            <div class="tiny" id="miniPrompt">Think in terms of BS, IS, and SCF movement, then submit.</div>
+            <div style="display:flex; gap:10px; flex-wrap:wrap;">
+              <button class="warn" id="hintBtn">Hint</button>
+              <button class="primary" id="submitBtn">Submit Answer</button>
+              <button class="accent hidden" id="nextBtn">Next Question</button>
+            </div>
+          </div>
+          <div id="feedbackBox" class="feedback">
+            <h4 id="feedbackTitle"></h4>
+            <p id="feedbackBody"></p>
+            <p id="feedbackExtra" class="tiny"></p>
+          </div>
+        </main>
+      </div>
+    </section>
+
+    <section id="resultsScreen" class="hidden">
+      <div class="card" style="padding:24px;">
+        <div class="question-head">
+          <div>
+            <div class="badge">Run Complete</div>
+            <div class="question-title">Performance Summary</div>
+            <div class="question-sub">Use this as a review sheet before quizzes and exams.</div>
+          </div>
+          <div class="buttons" style="margin-top:0;">
+            <button class="primary" id="playAgainBtn">Play Again</button>
+            <button class="secondary" id="resultsHomeBtn">Home</button>
+          </div>
+        </div>
+        <div class="results">
+          <div class="box">
+            <h3>Run metrics</h3>
+            <div class="dashboard" style="margin-top:0; grid-template-columns: repeat(4,1fr);">
+              <div class="stat"><div class="stat-label">Final Score</div><div class="stat-value" id="finalScore">0</div></div>
+              <div class="stat"><div class="stat-label">Accuracy</div><div class="stat-value" id="finalAccuracy">0%</div></div>
+              <div class="stat"><div class="stat-label">Best Streak</div><div class="stat-value" id="finalStreak">0</div></div>
+              <div class="stat"><div class="stat-label">Best Score</div><div class="stat-value" id="bestScoreBox">0</div></div>
+            </div>
+            <div class="review-list" id="reviewList"></div>
+          </div>
+          <div class="box">
+            <h3>Study tips</h3>
+            <ul id="tipList">
+              <li>For journal and adjusting entries, ask what changes on BS, IS, and SCF.</li>
+              <li>Noncash adjusting entries often affect BS and IS but not current-period SCF.</li>
+              <li>Receivable and payable accruals usually change operating performance before cash moves.</li>
+            </ul>
+          </div>
+        </div>
+      </div>
+    </section>
+  </div>
+
+  <div class="toast" id="toast"><strong id="toastTitle"></strong><div id="toastBody" class="tiny"></div></div>
+
+  <script>
+    const LEVELS = [
+      { id:'foundations', name:'Level 1 - Foundations', short:'Equation and statement basics', questions:[
+        { type:'mcq', title:'Accounting Equation', subtitle:'Choose the best answer.', scenario:'Which equation must always remain in balance in financial accounting?', tags:['Equation','Foundations'], options:['Assets = Revenues + Expenses','Assets = Liabilities + Equity','Cash = Revenue - Expenses','Assets + Liabilities = Equity'], correctIndex:1, explanation:'The basic accounting equation is Assets = Liabilities + Equity.' },
+        { type:'mcq', title:'Balance Sheet Focus', subtitle:'Identify the statement of financial position.', scenario:'Which statement reports assets, liabilities, and equity at a point in time?', tags:['Balance Sheet'], options:['Income Statement','Statement of Cash Flows','Balance Sheet','Statement of Retained Earnings'], correctIndex:2, explanation:'The balance sheet reports financial position at a point in time.' },
+        { type:'mcq', title:'Income Statement Focus', subtitle:'Know what measures performance.', scenario:'Which statement reports revenues and expenses for a period?', tags:['Income Statement'], options:['Balance Sheet','Income Statement','Statement of Cash Flows','None of the above'], correctIndex:1, explanation:'The income statement reports performance over a period.' },
+        { type:'mcq', title:'Cash Flow Focus', subtitle:'Think cash, not accrual.', scenario:'Which statement explains changes in cash through operating, investing, and financing activities?', tags:['SCF'], options:['Balance Sheet','Income Statement','Statement of Cash Flows','Statement of Retained Earnings'], correctIndex:2, explanation:'The statement of cash flows explains the sources and uses of cash.' },
+        { type:'mcq', title:'Temporary Account', subtitle:'Which account closes at period end?', scenario:'Which account is a temporary account?', tags:['Closing'], options:['Cash','Accounts Payable','Service Revenue','Equipment'], correctIndex:2, explanation:'Revenue accounts are temporary accounts.' }
+      ]},
+      { id:'journal', name:'Level 2 - Journal Entries', short:'Statement impact from transactions', questions:[
+        { type:'mcq', title:'Issue Common Stock for Cash', subtitle:'Focus on statement effects.', scenario:'A company issues common stock for $15,000 cash. Which statement impact is correct?', tags:['Journal entry','BS','SCF'], options:[
+          'Balance Sheet: cash up and equity up; Statement of Cash Flows: financing cash inflow; Income Statement: no effect',
+          'Balance Sheet: cash up and liabilities up; Statement of Cash Flows: operating inflow; Income Statement: revenue up',
+          'Balance Sheet: equipment up and cash down; Statement of Cash Flows: investing outflow; Income Statement: no effect',
+          'Balance Sheet: no effect; Income Statement: revenue up; Statement of Cash Flows: no effect'
+        ], correctIndex:0, explanation:'Issuing stock raises cash and equity, affects financing cash flow, and does not create revenue.' },
+        { type:'mcq', title:'Buy Equipment for Cash', subtitle:'Separate asset mix from performance.', scenario:'A company purchases equipment for $8,000 cash. Which statement impact is correct?', tags:['Journal entry','BS','SCF'], options:[
+          'Balance Sheet: cash down and equipment up; Statement of Cash Flows: investing cash outflow; Income Statement: no immediate effect',
+          'Balance Sheet: liabilities up; Statement of Cash Flows: operating outflow; Income Statement: expense up immediately',
+          'Balance Sheet: equity down; Statement of Cash Flows: financing outflow; Income Statement: no effect',
+          'Balance Sheet: receivables up; Statement of Cash Flows: no effect; Income Statement: revenue up'
+        ], correctIndex:0, explanation:'The transaction only swaps one asset for another and creates an investing cash outflow. Expense is recognized later through depreciation, not immediately.' },
+        { type:'mcq', title:'Provide Services on Account', subtitle:'Earned before cash collection.', scenario:'A company provides services on account for $4,600. Which statement impact is correct?', tags:['Journal entry','BS','IS'], options:[
+          'Balance Sheet: accounts receivable up and equity up through net income; Income Statement: revenue up; Statement of Cash Flows: no immediate effect',
+          'Balance Sheet: cash up and liabilities up; Income Statement: no effect; Statement of Cash Flows: financing inflow',
+          'Balance Sheet: cash down and equipment up; Income Statement: expense up; Statement of Cash Flows: investing outflow',
+          'Balance Sheet: no effect; Income Statement: revenue up; Statement of Cash Flows: operating inflow'
+        ], correctIndex:0, explanation:'Revenue is recognized when earned, receivables rise, and there is no immediate cash flow because cash has not been collected yet.' },
+        { type:'mcq', title:'Pay Wages in Cash', subtitle:'Expense plus cash movement.', scenario:'A company pays employees $1,200 in wages. Which statement impact is correct?', tags:['Journal entry','IS','SCF'], options:[
+          'Balance Sheet: cash down and equity down through lower net income; Income Statement: wage expense up; Statement of Cash Flows: operating cash outflow',
+          'Balance Sheet: receivables down; Income Statement: revenue up; Statement of Cash Flows: financing outflow',
+          'Balance Sheet: liabilities up; Income Statement: no effect; Statement of Cash Flows: no effect',
+          'Balance Sheet: cash up; Income Statement: expense down; Statement of Cash Flows: operating inflow'
+        ], correctIndex:0, explanation:'Paying wages reduces cash, recognizes an operating expense, lowers net income, and is an operating cash outflow.' },
+        { type:'mcq', title:'Pay Accounts Payable', subtitle:'Watch for cash without new expense.', scenario:'A company pays $2,750 toward accounts payable. Which statement impact is correct?', tags:['Journal entry','BS','SCF'], options:[
+          'Balance Sheet: cash down and liabilities down; Income Statement: no current-period effect; Statement of Cash Flows: operating cash outflow',
+          'Balance Sheet: cash down and equity down; Income Statement: expense up; Statement of Cash Flows: financing outflow',
+          'Balance Sheet: cash up and liabilities down; Income Statement: no effect; Statement of Cash Flows: operating inflow',
+          'Balance Sheet: no effect; Income Statement: expense up; Statement of Cash Flows: no effect'
+        ], correctIndex:0, explanation:'The expense was recognized earlier when the payable was created. Paying the liability later changes the balance sheet and cash flow, but not current net income.' }
+      ]},
+      { id:'cycle', name:'Level 3 - Accounting Cycle', short:'From journal to statements', questions:[
+        { type:'mcq', title:'Cycle Order', subtitle:'What comes right after journalizing?', scenario:'After transactions are journalized, what is the next major step in the accounting cycle?', tags:['Accounting cycle'], options:['Prepare closing entries','Post to the ledger','Issue the annual report','Prepare bank reconciliation only'], correctIndex:1, explanation:'Entries are posted to the ledger after journalizing.' },
+        { type:'mcq', title:'Adjusting Entries', subtitle:'Think one balance-sheet and one income-statement account.', scenario:'Adjusting entries always affect which combination of accounts?', tags:['Adjustments'], options:['Two permanent accounts only','One permanent account and one temporary account','Two revenue accounts','Cash and dividends only'], correctIndex:1, explanation:'Adjusting entries typically affect one balance sheet account and one income statement account.' },
+        { type:'mcq', title:'Closing Entries', subtitle:'Reset the temporary accounts.', scenario:'Which account is closed at the end of the period?', tags:['Closing'], options:['Equipment','Accounts Payable','Sales Revenue','Common Stock'], correctIndex:2, explanation:'Revenue accounts are temporary and are closed.' },
+        { type:'mcq', title:'Trial Balance', subtitle:'Arithmetic check, not full correctness.', scenario:'The main purpose of a trial balance is to verify that:', tags:['Trial balance'], options:['Net income is correct','Cash has been reconciled','Total debits equal total credits','All fraud has been prevented'], correctIndex:2, explanation:'A trial balance verifies debit-credit equality.' }
+      ]},
+      { id:'adjusting', name:'Level 4 - Adjusting Entries', short:'BS, IS, and no-cash adjustments', questions:[
+        { type:'mcq', title:'Accrued Revenue', subtitle:'Revenue earned but not yet collected.', scenario:'At month-end, the company has earned $2,400 of service revenue that will be collected next month. Which statement impact is correct?', tags:['Accrued revenue','BS','IS'], options:[
+          'Balance Sheet: accounts receivable up and equity up through net income; Income Statement: revenue up; Statement of Cash Flows: no immediate effect',
+          'Balance Sheet: cash up and equity up; Income Statement: revenue up; Statement of Cash Flows: operating inflow',
+          'Balance Sheet: liabilities up; Income Statement: expense up; Statement of Cash Flows: no effect',
+          'Balance Sheet: no effect; Income Statement: revenue up; Statement of Cash Flows: financing inflow'
+        ], correctIndex:0, explanation:'Accrued revenue increases receivables and revenue now, but cash has not yet been collected.' },
+        { type:'mcq', title:'Accrued Salaries', subtitle:'Expense incurred before payment.', scenario:'Employees have earned $1,900 of salaries that will be paid next period. Which statement impact is correct?', tags:['Accrued expense','BS','IS'], options:[
+          'Balance Sheet: liabilities up and equity down through lower net income; Income Statement: salaries expense up; Statement of Cash Flows: no immediate effect',
+          'Balance Sheet: cash down and liabilities down; Income Statement: no effect; Statement of Cash Flows: operating outflow',
+          'Balance Sheet: assets up; Income Statement: revenue up; Statement of Cash Flows: no effect',
+          'Balance Sheet: no effect; Income Statement: expense up; Statement of Cash Flows: financing outflow'
+        ], correctIndex:0, explanation:'The expense is recognized now with a payable, but cash is not paid until the following period.' },
+        { type:'mcq', title:'Depreciation', subtitle:'Noncash expense.', scenario:'Record monthly depreciation of $600 on equipment. Which statement impact is correct?', tags:['Depreciation','BS','IS','SCF'], options:[
+          'Balance Sheet: accumulated depreciation increases and equity falls through lower net income; Income Statement: depreciation expense up; Statement of Cash Flows: no immediate cash effect',
+          'Balance Sheet: cash down and equipment down; Income Statement: depreciation expense up; Statement of Cash Flows: operating outflow',
+          'Balance Sheet: liabilities up; Income Statement: no effect; Statement of Cash Flows: investing inflow',
+          'Balance Sheet: receivables up; Income Statement: revenue up; Statement of Cash Flows: no effect'
+        ], correctIndex:0, explanation:'Depreciation is a noncash expense. It reduces income and the net book value of assets through accumulated depreciation, but does not use cash in the period.' },
+        { type:'mcq', title:'Bad Debt Estimate', subtitle:'Allowance method adjustment.', scenario:'Estimate bad debts expense for the period at $1,250. Which statement impact is correct?', tags:['Allowance method','BS','IS'], options:[
+          'Balance Sheet: net accounts receivable decreases through a higher allowance and equity decreases through lower net income; Income Statement: bad debt expense up; Statement of Cash Flows: no immediate effect',
+          'Balance Sheet: cash decreases and liabilities decrease; Income Statement: no effect; Statement of Cash Flows: operating outflow',
+          'Balance Sheet: inventory decreases and cost of goods sold increases; Statement of Cash Flows: no effect',
+          'Balance Sheet: no effect; Income Statement: expense up; Statement of Cash Flows: financing outflow'
+        ], correctIndex:0, explanation:'The allowance method records expected credit losses before write-off. It reduces net receivables and current-period income without using cash immediately.' }
+      ]},
+      { id:'financials', name:'Level 5 - Financial Statements', short:'Classification and relationships', questions:[
+        { type:'mcq', title:'Income Statement Item', subtitle:'Which belongs on the income statement?', scenario:'Which item appears on the income statement rather than the balance sheet?', tags:['Income statement'], options:['Inventory','Accounts Payable','Cost of Goods Sold','Retained Earnings'], correctIndex:2, explanation:'Cost of Goods Sold is an expense on the income statement.' },
+        { type:'mcq', title:'Cash Flow Classification', subtitle:'Think operating, investing, financing.', scenario:'Cash received from issuing common stock belongs in which statement of cash flow section?', tags:['Cash flows'], options:['Operating','Investing','Financing','Noncash only'], correctIndex:2, explanation:'Issuing stock is a financing activity.' },
+        { type:'mcq', title:'Gross Profit', subtitle:'Know the ladder.', scenario:'Gross profit is computed as:', tags:['Gross profit'], options:['Sales - Operating Expenses','Sales - Cost of Goods Sold','Net Income + Taxes','Assets - Liabilities'], correctIndex:1, explanation:'Gross profit equals sales minus cost of goods sold.' },
+        { type:'mcq', title:'Retained Earnings Link', subtitle:'What increases retained earnings?', scenario:'Which item increases retained earnings?', tags:['Equity'], options:['Dividends','Net income','Notes payable','Inventory'], correctIndex:1, explanation:'Net income increases retained earnings.' }
+      ]},
+      { id:'advanced', name:'Level 6 - Advanced Topics', short:'Receivables, inventory, depreciation, CVP', questions:[
+        { type:'mcq', title:'Allowance Method Logic', subtitle:'Why use it?', scenario:'Why does the allowance method improve financial reporting for receivables?', tags:['Receivables'], options:['It eliminates all uncertainty','It matches expected bad debt expense to the period and values receivables more realistically','It guarantees collection','It records write-offs before any sale occurs'], correctIndex:1, explanation:'It improves matching and reports receivables at a more realistic net realizable value.' },
+        { type:'mcq', title:'Inventory Costing', subtitle:'Assume rising prices.', scenario:'When prices are rising, which method typically produces the lowest cost of goods sold?', tags:['Inventory'], options:['FIFO','LIFO','Both always equal','Neither can be compared'], correctIndex:0, explanation:'FIFO usually gives lower COGS when costs are rising.' },
+        { type:'mcq', title:'Cost Behavior', subtitle:'Watch total cost movement.', scenario:'Which cost changes in total in direct proportion to activity volume?', tags:['Cost behavior'], options:['Fixed cost','Variable cost','Step cost','Sunk cost'], correctIndex:1, explanation:'Variable costs move in total with activity volume.' },
+        { type:'mcq', title:'CVP Contribution Margin', subtitle:'Price minus variable cost.', scenario:'A service sells for $75, has variable cost of $25, and fixed costs of $80,000. What is the unit contribution margin?', tags:['CVP'], options:['$25','$50','$75','$100'], correctIndex:1, explanation:'Contribution margin per unit is $75 - $25 = $50.' }
+      ]}
+    ];
+
+    const UI = {
+      homeScreen: document.getElementById('homeScreen'),
+      gameScreen: document.getElementById('gameScreen'),
+      resultsScreen: document.getElementById('resultsScreen'),
+      studyLevelGrid: document.getElementById('studyLevelGrid'),
+      levelGrid: document.getElementById('levelGrid'),
+      scoreStat: document.getElementById('scoreStat'),
+      streakStat: document.getElementById('streakStat'),
+      livesStat: document.getElementById('livesStat'),
+      multiplierStat: document.getElementById('multiplierStat'),
+      qStat: document.getElementById('qStat'),
+      badgeText: document.getElementById('badgeText'),
+      questionTitle: document.getElementById('questionTitle'),
+      questionSubtitle: document.getElementById('questionSubtitle'),
+      scenarioBox: document.getElementById('scenarioBox'),
+      tagChips: document.getElementById('tagChips'),
+      mcqArea: document.getElementById('mcqArea'),
+      submitBtn: document.getElementById('submitBtn'),
+      nextBtn: document.getElementById('nextBtn'),
+      hintBtn: document.getElementById('hintBtn'),
+      feedbackBox: document.getElementById('feedbackBox'),
+      feedbackTitle: document.getElementById('feedbackTitle'),
+      feedbackBody: document.getElementById('feedbackBody'),
+      feedbackExtra: document.getElementById('feedbackExtra'),
+      progressFill: document.getElementById('progressFill'),
+      modeSummary: document.getElementById('modeSummary'),
+      mainPanel: document.getElementById('mainPanel'),
+      finalScore: document.getElementById('finalScore'),
+      finalAccuracy: document.getElementById('finalAccuracy'),
+      finalStreak: document.getElementById('finalStreak'),
+      bestScoreBox: document.getElementById('bestScoreBox'),
+      reviewList: document.getElementById('reviewList'),
+      tipList: document.getElementById('tipList'),
+      toast: document.getElementById('toast'),
+      toastTitle: document.getElementById('toastTitle'),
+      toastBody: document.getElementById('toastBody'),
+      scoreWrap: document.getElementById('scoreWrap'),
+      streakWrap: document.getElementById('streakWrap')
+    };
+
+    let state = {
+      mode: 'quick', selectedLevelId: null, flatQuestions: [], index: 0, score: 0, streak: 0, bestStreak: 0,
+      lives: 3, maxLives: 5, multiplier: 1, correct: 0, answered: false, selectedIndex: null,
+      review: [], bestScore: Number(localStorage.getItem('ledger-legends-best-statement-mode') || 0)
+    };
+
+    function shuffle(arr){ const a=[...arr]; for(let i=a.length-1;i>0;i--){const j=Math.floor(Math.random()*(i+1)); [a[i],a[j]]=[a[j],a[i]];} return a; }
+    function currentQuestion(){ return state.flatQuestions[state.index]; }
+    function money(n){ return Number(n).toLocaleString(); }
+
+    function renderStudyButtons(){
+      UI.studyLevelGrid.innerHTML = LEVELS.map(level => `
+        <button class="study-btn ${state.selectedLevelId === level.id ? 'active' : ''}" data-level="${level.id}">
+          <strong>${level.name}</strong>
+          <span>${level.short}</span>
+        </button>
+      `).join('');
+      [...UI.studyLevelGrid.querySelectorAll('.study-btn')].forEach(btn => {
+        btn.addEventListener('click', () => startStudyLevel(btn.dataset.level));
+      });
+    }
+
+    function buildQuestions(mode, levelId = null){
+      if(mode === 'quick'){
+        const mixed = LEVELS.flatMap((level, levelIndex) => level.questions.map(q => ({...q, levelId: level.id, levelName: level.name, levelIndex})));
+        return shuffle(mixed).slice(0, 10);
+      }
+      if(mode === 'full'){
+        return LEVELS.flatMap((level, levelIndex) => level.questions.map(q => ({...q, levelId: level.id, levelName: level.name, levelIndex})));
+      }
+      const level = LEVELS.find(x => x.id === levelId);
+      return level.questions.map((q, idx) => ({...q, levelId: level.id, levelName: level.name, levelIndex: idx}));
+    }
+
+    function startGame(mode){
+      state.mode = mode;
+      state.selectedLevelId = null;
+      state.score = 0; state.streak = 0; state.bestStreak = 0; state.lives = 3; state.multiplier = 1; state.correct = 0; state.index = 0; state.answered = false; state.selectedIndex = null; state.review = [];
+      state.bestScore = Number(localStorage.getItem('ledger-legends-best-statement-mode') || 0);
+      state.flatQuestions = buildQuestions(mode);
+      if(mode === 'quick') UI.modeSummary.textContent = 'Quick Game: 10 mixed questions from across the course.';
+      if(mode === 'full') UI.modeSummary.textContent = 'Full Challenge: all levels in one run with lives and streak scoring.';
+      UI.homeScreen.classList.add('hidden');
+      UI.resultsScreen.classList.add('hidden');
+      UI.gameScreen.classList.remove('hidden');
+      renderStudyButtons();
+      renderLevels();
+      renderQuestion();
+      renderStats();
+    }
+
+    function startStudyLevel(levelId){
+      state.mode = 'study';
+      state.selectedLevelId = levelId;
+      state.score = 0; state.streak = 0; state.bestStreak = 0; state.lives = 3; state.multiplier = 1; state.correct = 0; state.index = 0; state.answered = false; state.selectedIndex = null; state.review = [];
+      state.bestScore = Number(localStorage.getItem('ledger-legends-best-statement-mode') || 0);
+      state.flatQuestions = buildQuestions('study', levelId);
+      const level = LEVELS.find(x => x.id === levelId);
+      UI.modeSummary.textContent = `Study Mode: ${level.name} only.`;
+      UI.homeScreen.classList.add('hidden');
+      UI.resultsScreen.classList.add('hidden');
+      UI.gameScreen.classList.remove('hidden');
+      renderStudyButtons();
+      renderLevels();
+      renderQuestion();
+      renderStats();
+    }
+
+    function renderLevels(){
+      const progress = {};
+      state.flatQuestions.forEach((q, idx) => {
+        progress[q.levelId] ||= {total:0, done:0};
+        progress[q.levelId].total += 1;
+        if(idx < state.index) progress[q.levelId].done += 1;
+      });
+      const visibleLevels = state.mode === 'study' ? LEVELS.filter(l => l.id === state.selectedLevelId) : LEVELS;
+      UI.levelGrid.innerHTML = visibleLevels.map(level => {
+        const p = progress[level.id] || {total:0, done:0};
+        const pct = p.total ? Math.round((p.done/p.total)*100) : 0;
+        const active = currentQuestion() && currentQuestion().levelId === level.id;
+        return `<button class="level-btn ${active?'active':''}"><div class="level-title">${level.name}</div><div class="level-meta">${level.short}</div><div class="progress-shell"><div class="progress-fill" style="width:${pct}%"></div></div></button>`;
+      }).join('');
+    }
+
+    function renderLives(){
+      const full = Math.floor(state.lives);
+      const half = state.lives % 1 !== 0;
+      let html = '';
+      for(let i=1;i<=state.maxLives;i++){
+        if(i <= full) html += '<span class="heart">❤️</span>';
+        else if(i === full + 1 && half) html += '<span class="heart">💖</span>';
+        else html += '<span class="heart empty">🤍</span>';
+      }
+      UI.livesStat.innerHTML = html;
+    }
+
+    function flash(el){ el.classList.remove('flash'); void el.offsetWidth; el.classList.add('flash'); }
+
+    function renderStats(){
+      UI.scoreStat.textContent = money(state.score);
+      UI.streakStat.textContent = state.streak;
+      renderLives();
+      UI.multiplierStat.textContent = state.multiplier.toFixed(1) + 'x';
+      UI.qStat.textContent = `${Math.min(state.index+1, state.flatQuestions.length)} / ${state.flatQuestions.length}`;
+      UI.bestScoreBox.textContent = money(state.bestScore);
+    }
+
+    function renderQuestion(){
+      const q = currentQuestion();
+      if(!q){ endGame(); return; }
+      state.answered = false; state.selectedIndex = null;
+      UI.feedbackBox.className = 'feedback';
+      UI.feedbackTitle.textContent = '';
+      UI.feedbackBody.textContent = '';
+      UI.feedbackExtra.textContent = '';
+      UI.nextBtn.classList.add('hidden');
+      UI.submitBtn.classList.remove('hidden');
+      UI.submitBtn.disabled = false;
+      UI.hintBtn.disabled = false;
+      UI.badgeText.textContent = q.levelName;
+      UI.questionTitle.textContent = q.title;
+      UI.questionSubtitle.textContent = q.subtitle || '';
+      UI.scenarioBox.textContent = q.scenario;
+      UI.tagChips.innerHTML = (q.tags || []).map(t => `<span class="chip">${t}</span>`).join('');
+      UI.mcqArea.innerHTML = q.options.map((opt, idx) => `<button class="answer-card" data-index="${idx}"><div class="key">${String.fromCharCode(65+idx)}</div><div class="answer-text"><strong>${opt}</strong><span>Select this answer</span></div></button>`).join('');
+      [...UI.mcqArea.querySelectorAll('.answer-card')].forEach(btn => btn.addEventListener('click', () => {
+        if(state.answered) return;
+        state.selectedIndex = Number(btn.dataset.index);
+        [...UI.mcqArea.children].forEach(el => el.classList.remove('selected'));
+        btn.classList.add('selected');
+      }));
+      const sameLevel = state.flatQuestions.filter(x => x.levelId === q.levelId);
+      const done = state.flatQuestions.filter((x, idx) => x.levelId === q.levelId && idx < state.index).length;
+      UI.progressFill.style.width = `${sameLevel.length ? (done/sameLevel.length)*100 : 0}%`;
+      renderLevels();
+      renderStats();
+    }
+
+    function updateMultiplier(){ state.multiplier = Math.min(3, 1 + state.streak * 0.25); }
+
+    function showToast(title, body){
+      UI.toastTitle.textContent = title;
+      UI.toastBody.textContent = body;
+      UI.toast.classList.add('show');
+      clearTimeout(UI.toast._t);
+      UI.toast._t = setTimeout(() => UI.toast.classList.remove('show'), 1800);
+    }
+
+    function showFeedback(good, title, body, extra=''){
+      UI.feedbackBox.className = `feedback show ${good ? 'good' : 'bad'}`;
+      UI.feedbackTitle.textContent = title;
+      UI.feedbackBody.textContent = body;
+      UI.feedbackExtra.textContent = extra;
+      UI.mainPanel.classList.remove('pulse-good','pulse-bad');
+      void UI.mainPanel.offsetWidth;
+      UI.mainPanel.classList.add(good ? 'pulse-good' : 'pulse-bad');
+    }
+
+    function markMcq(correctIndex, selectedIndex){
+      [...UI.mcqArea.children].forEach((el, idx) => {
+        if(idx === correctIndex) el.classList.add('correct');
+        if(idx === selectedIndex && idx !== correctIndex) el.classList.add('wrong');
+      });
+    }
+
+    function awardCorrect(points, explanation, correctAnswerText, userAnswerText){
+      state.correct += 1;
+      state.streak += 1;
+      state.bestStreak = Math.max(state.bestStreak, state.streak);
+      updateMultiplier();
+      const total = Math.round(points * state.multiplier);
+      state.score += total;
+      flash(UI.scoreWrap); flash(UI.streakWrap);
+      if(state.streak % 5 === 0 && state.lives < state.maxLives){
+        state.lives += 1;
+        showToast('Life restored', '5 correct in a row earned you +1 life.');
+      } else {
+        showToast('Correct', `+${total} points`);
+      }
+      showFeedback(true, `Correct. +${total} points`, explanation, `Correct answer: ${correctAnswerText}`);
+      state.review.push({ title: currentQuestion().title, levelName: currentQuestion().levelName, correct:true, explanation, userAnswerText, correctAnswerText });
+    }
+
+    function applyWrongLoss(loss, explanation, correctAnswerText, userAnswerText, label='Not quite.'){
+      state.streak = 0;
+      updateMultiplier();
+      state.lives = Math.max(0, state.lives - loss);
+      showToast('Life lost', `-${loss} life${loss !== 1 ? 's' : ''}`);
+      showFeedback(false, label, explanation, `Correct answer: ${correctAnswerText}`);
+      state.review.push({ title: currentQuestion().title, levelName: currentQuestion().levelName, correct:false, explanation, userAnswerText, correctAnswerText });
+    }
+
+    function handleSubmit(){
+      if(state.answered) return;
+      const q = currentQuestion();
+      if(state.selectedIndex === null){ showFeedback(false, 'Select an answer first.', 'Choose one option before submitting.'); return; }
+      const correct = state.selectedIndex === q.correctIndex;
+      const userAnswerText = q.options[state.selectedIndex];
+      const correctAnswerText = q.options[q.correctIndex];
+      markMcq(q.correctIndex, state.selectedIndex);
+      state.answered = true;
+      UI.submitBtn.disabled = true;
+      UI.hintBtn.disabled = true;
+      UI.nextBtn.classList.remove('hidden');
+      if(correct) awardCorrect(100, q.explanation, correctAnswerText, userAnswerText);
+      else applyWrongLoss(1, q.explanation, correctAnswerText, userAnswerText);
+      renderStats();
+      UI.nextBtn.textContent = (state.lives <= 0 || state.index >= state.flatQuestions.length - 1) ? 'See Results' : 'Next Question';
+    }
+
+    function handleNext(){
+      if(state.lives <= 0 || state.index >= state.flatQuestions.length - 1){ endGame(); return; }
+      state.index += 1;
+      renderQuestion();
+    }
+
+    function showHint(){
+      const q = currentQuestion();
+      showFeedback(true, 'Hint', q.hint || 'Ask: what happens to assets, liabilities, equity, net income, and cash right now?', 'Focus on statement movement, not journal mechanics.');
+    }
+
+    function generateTips(missed){
+      const text = missed.map(x => `${x.title} ${x.explanation}`).join(' ').toLowerCase();
+      const tips = [];
+      if(text.includes('cash')) tips.push('Separate accrual effects from cash effects. Many correct answers hinge on whether cash moved now or later.');
+      if(text.includes('revenue') || text.includes('receivable')) tips.push('When revenue is earned on account, BS and IS usually change immediately, but SCF usually waits until collection.');
+      if(text.includes('payable') || text.includes('accrued')) tips.push('Accrued expenses often hit the BS and IS first, with cash flow appearing in a later period when payment is made.');
+      if(text.includes('depreciation') || text.includes('allowance')) tips.push('Noncash adjustments usually affect BS and IS without creating a current-period cash flow.');
+      if(!tips.length) tips.push('Replay the level where you missed the most questions and restate each answer as BS / IS / SCF effects.');
+      tips.push('Use the review cards below as mini-notes.');
+      return tips.slice(0,4);
+    }
+
+    function endGame(){
+      UI.gameScreen.classList.add('hidden');
+      UI.resultsScreen.classList.remove('hidden');
+      const accuracy = state.review.length ? Math.round((state.correct / state.review.length) * 100) : 0;
+      UI.finalScore.textContent = money(state.score);
+      UI.finalAccuracy.textContent = `${accuracy}%`;
+      UI.finalStreak.textContent = state.bestStreak;
+      if(state.score > state.bestScore){
+        state.bestScore = state.score;
+        localStorage.setItem('ledger-legends-best-statement-mode', String(state.score));
+      }
+      UI.bestScoreBox.textContent = money(state.bestScore);
+      const missed = state.review.filter(r => !r.correct);
+      UI.tipList.innerHTML = generateTips(missed).map(t => `<li>${t}</li>`).join('');
+      UI.reviewList.innerHTML = state.review.map(item => `
+        <div class="review-item ${item.correct ? 'good' : 'bad'}">
+          <div class="review-head"><strong>${item.title}</strong><span class="tag ${item.correct ? 'good' : 'bad'}">${item.correct ? 'Correct' : 'Review'}</span></div>
+          <div class="tiny" style="margin-top:6px;">${item.levelName}</div>
+          <p style="margin:10px 0 6px;">${item.explanation}</p>
+          <div class="tiny">Your answer: ${item.userAnswerText || 'No answer recorded'}</div>
+          <div class="tiny">Correct answer: ${item.correctAnswerText}</div>
+        </div>
+      `).join('');
+    }
+
+    document.getElementById('startQuickBtn').addEventListener('click', () => startGame('quick'));
+    document.getElementById('startAllBtn').addEventListener('click', () => startGame('full'));
+    document.getElementById('howBtn').addEventListener('click', () => alert('How to play:\n\n1. Read the scenario.\n2. Think in terms of Balance Sheet, Income Statement, and Statement of Cash Flows.\n3. Submit when ready.\n4. Correct answers earn points and build streak multipliers.\n5. Wrong answers cost lives.\n6. You can also study a single level from the home screen.'));
+    document.getElementById('homeBtn').addEventListener('click', () => { UI.gameScreen.classList.add('hidden'); UI.resultsScreen.classList.add('hidden'); UI.homeScreen.classList.remove('hidden'); renderStudyButtons(); });
+    document.getElementById('restartBtn').addEventListener('click', () => {
+      if(state.mode === 'study' && state.selectedLevelId) startStudyLevel(state.selectedLevelId);
+      else startGame(state.mode);
+    });
+    document.getElementById('playAgainBtn').addEventListener('click', () => {
+      if(state.mode === 'study' && state.selectedLevelId) startStudyLevel(state.selectedLevelId);
+      else startGame(state.mode);
+    });
+    document.getElementById('resultsHomeBtn').addEventListener('click', () => { UI.resultsScreen.classList.add('hidden'); UI.homeScreen.classList.remove('hidden'); renderStudyButtons(); });
+    UI.submitBtn.addEventListener('click', handleSubmit);
+    UI.nextBtn.addEventListener('click', handleNext);
+    UI.hintBtn.addEventListener('click', showHint);
+
+    renderLives();
+    renderStudyButtons();
+    UI.bestScoreBox.textContent = money(state.bestScore);
+  </script>
+</body>
+</html>
